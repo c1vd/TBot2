@@ -209,6 +209,7 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
 
     override fun onClose(code: Int, reason: String?, remote: Boolean) {
         println("Closed connection")
+        connected = false
     }
 
     override fun onError(ex: Exception) {

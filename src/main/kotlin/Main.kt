@@ -3,12 +3,11 @@ package com.servergroup
 import com.github.kotlintelegrambot.bot
 import com.github.kotlintelegrambot.dispatch
 import com.github.kotlintelegrambot.dispatcher.command
+import com.github.kotlintelegrambot.entities.ChatId
 import io.github.cdimascio.dotenv.dotenv
 
 
 fun main() {
-
-
     val env = dotenv()
 
     val maxToken = env["MAX_TOKEN"]
@@ -27,19 +26,25 @@ fun main() {
         token = telegramToken
         dispatch {
             command("text") {
-                try{
+                try {
                     val text = message.text!!
                     try {
                         val maxChatId = text.split(" ")[1]
                         maxChatId.toLong()
                         client.sendMessage(text.substring(text.substring(6).indexOf(' ') + 6), maxChatId)
-                    }catch (_: Exception){
+                    } catch (_: Exception) {
                         client.sendMessage(text.substring(6), maxDefaultChatId)
                     }
-                }catch (e: Exception){
+                } catch (e: Exception) {
                     println("Ошибочка: ${e.toString()}")
                 }
 
+            }
+            command("status"){
+                bot.sendMessage(ChatId.fromId(message.chat.id),"${when(client.connected){
+                    true -> "✔"
+                    false -> "❌"
+                }} MaxClient\n✔ Telegram")
             }
         }
     }
