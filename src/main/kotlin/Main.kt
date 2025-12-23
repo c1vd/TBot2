@@ -1,5 +1,8 @@
 package com.servergroup
 
+import com.github.kotlintelegrambot.bot
+import com.github.kotlintelegrambot.dispatch
+import com.github.kotlintelegrambot.dispatcher.command
 import io.github.cdimascio.dotenv.dotenv
 
 
@@ -11,6 +14,7 @@ fun main() {
     val maxToken = env["MAX_TOKEN"]
     val telegramToken = env["TELEGRAM_TOKEN"]
     val telegramChatId = env["TELEGRAM_CHAT_ID"]
+    val maxDefaultChatId = env["MAX_SEND_CHAT_ID"]
 
     val client = MaxClient(
         maxToken,
@@ -18,5 +22,28 @@ fun main() {
         telegramChatId
     )
     client.connect()
-    client.heartbeat()
+
+    val bot = bot {
+        token = telegramToken
+        dispatch {
+            command("text") {
+                try{
+                    val text = message.text!!
+                    try {
+                        val maxChatId = text.split(" ")[1]
+                        maxChatId.toLong()
+                        client.sendMessage(text.substring(text.substring(6).indexOf(' ') + 6), maxChatId)
+                    }catch (_: Exception){
+                        client.sendMessage(text.substring(6), maxDefaultChatId)
+                    }
+                }catch (e: Exception){
+                    println("Ошибочка: ${e.toString()}")
+                }
+
+            }
+        }
+    }
+    bot.startPolling()
+
+
 }

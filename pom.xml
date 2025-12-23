@@ -19,6 +19,10 @@
             <id>mavenCentral</id>
             <url>https://repo1.maven.org/maven2/</url>
         </repository>
+        <repository>
+            <id>jitpack</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <build>
@@ -119,6 +123,12 @@
             <artifactId>slf4j-simple</artifactId>
             <version>2.0.17</version>
             <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.github.kotlin-telegram-bot.kotlin-telegram-bot/telegram -->
+        <dependency>
+            <groupId>com.github.kotlin-telegram-bot.kotlin-telegram-bot</groupId>
+            <artifactId>telegram</artifactId>
+            <version>6.3.0</version>
         </dependency>
     </dependencies>
 

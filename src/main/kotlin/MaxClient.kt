@@ -34,6 +34,9 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
             return field
         }
 
+    val cid: Int
+        get() = System.currentTimeMillis().toInt()
+
 
     fun heartbeat() {
         while (!connected) {
@@ -114,6 +117,29 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
         )
     }
 
+    fun sendMessage(text: String, chatId: String) {
+        val req = gson.toJson(
+            mapOf(
+                "ver" to 11,
+                "cmd" to 0,
+                "seq" to seq,
+                "opcode" to 64,
+                "payload" to mapOf(
+                    "chatId" to chatId.toLong(),
+                    "message" to mapOf(
+                        "text" to text,
+                        "cid" to cid,
+                        "elements" to listOf<Any>(),
+                        "attaches" to listOf<Any>()
+                    ),
+                    "notify" to true
+                )
+            )
+        )
+
+        send(req)
+    }
+
     override fun onOpen(handshakedata: ServerHandshake) {
         // User agent sending
         send(getUserAgent())
@@ -122,6 +148,10 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
         send(getAuthRequest())
 
         connected = true
+
+        scope.async {
+            heartbeat()
+        }
     }
 
     override fun onMessage(message: String?) {
@@ -129,10 +159,11 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
             if (message == null) return@async
 
             val obj = gson.fromJson(message, JsonObject::class.java)
+            println(obj)
             val opcode = obj.get("opcode").toString().toInt()
             val payload = obj.get("payload")
             when (opcode) {
-                1 -> {
+                /*1 -> {
                     send(
                         gson.toJson(
                             mapOf(
@@ -144,7 +175,7 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
                             )
                         )
                     )
-                }
+                }*/
 
 
                 32 -> {
@@ -165,8 +196,8 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
 
                     var i = 0
                     while (gotUser == null && i < 10) {
-                            Thread.sleep(100)
-                            i += 1
+                        Thread.sleep(100)
+                        i += 1
                     }
                     val messageText = "${gotUser?.name ?: "Unknown"}: $text"
                     telegramClient.sendMessage(messageText, telegramChatId)
@@ -178,14 +209,13 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
 
     override fun onClose(code: Int, reason: String?, remote: Boolean) {
         println("Closed connection")
-        reconnect()
     }
 
     override fun onError(ex: Exception) {
         ex.printStackTrace()
     }
 
-    companion object{
+    companion object {
         val logger: Logger = LoggerFactory.getLogger(TelegramClient.Companion::class.java)!!
     }
 }
