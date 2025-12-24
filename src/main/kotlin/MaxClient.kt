@@ -43,6 +43,7 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
             Thread.sleep(500)
         }
         while (true) {
+            logger.info("Heartbeat tick")
             send(
                 gson.toJson(
                     mapOf(
@@ -54,7 +55,7 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
                     )
                 )
             )
-            Thread.sleep(25 * 1000)
+            Thread.sleep(12 * 1000)
         }
     }
 
@@ -159,9 +160,11 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
             if (message == null) return@async
 
             val obj = gson.fromJson(message, JsonObject::class.java)
-            println(obj)
-            val opcode = obj.get("opcode").toString().toInt()
-            val payload = obj.get("payload")
+            val opcode = obj["opcode"].toString().toInt()
+            val payload = obj["payload"]
+
+            logger.debug(obj.toString())
+
             when (opcode) {
                 /*1 -> {
                     send(
@@ -179,18 +182,18 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
 
 
                 32 -> {
-                    val user = payload.asJsonObject.get("contacts").asJsonArray[0].asJsonObject
-                    val name = user.get("names").asJsonArray[0].asJsonObject["name"]
+                    val user = payload.asJsonObject["contacts"].asJsonArray[0].asJsonObject
+                    val name = user["names"].asJsonArray[0].asJsonObject["name"]
                     val id = user.get("id")
 
                     gotUser = User(id.asString, name.asString)
                 }
 
                 128 -> {
-                    val message = payload.asJsonObject.get("message")
+                    val message = payload.asJsonObject["message"]
 
-                    val senderId = message.asJsonObject.get("sender").asString
-                    val text = message.asJsonObject.get("text").asString
+                    val senderId = message.asJsonObject["sender"].asString
+                    val text = message.asJsonObject["text"].asString
 
                     getUser(senderId)
 
@@ -217,6 +220,6 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
     }
 
     companion object {
-        val logger: Logger = LoggerFactory.getLogger(TelegramClient.Companion::class.java)!!
+        val logger: Logger = LoggerFactory.getLogger("MaxClient")!!
     }
 }

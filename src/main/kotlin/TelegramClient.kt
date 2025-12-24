@@ -18,14 +18,15 @@ class TelegramClient(val botToken: String) {
         .build()
 
     fun sendMessage(text: String, chatId: String) {
+        val params = gson.toJson(mapOf("chat_id" to chatId, "text" to text, "parse_mode" to "HTML"))
+        logger.debug(params)
+
         client.send(
             getPost(
                 "https://api.telegram.org/bot${botToken}/sendMessage",
-                gson.toJson(mapOf("chat_id" to chatId, "text" to text, "parse_mode" to "HTML"))
+                params,
             ), HttpResponse.BodyHandlers.ofString()
-        ).let {
-            logger.info(it.toString())
-        }
+        )
     }
 
     companion object {
@@ -36,6 +37,6 @@ class TelegramClient(val botToken: String) {
                 .build()
         }
 
-        val logger: Logger = LoggerFactory.getLogger(Companion::class.java)!!
+        val logger: Logger = LoggerFactory.getLogger("TelegramClient")!!
     }
 }
