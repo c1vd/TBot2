@@ -5,6 +5,7 @@ import com.github.kotlintelegrambot.dispatch
 import com.github.kotlintelegrambot.dispatcher.command
 import com.github.kotlintelegrambot.entities.ChatId
 import io.github.cdimascio.dotenv.dotenv
+import kotlin.system.exitProcess
 
 
 fun main() {
@@ -45,6 +46,11 @@ fun main() {
                     true -> "✔"
                     false -> "❌"
                 }} MaxClient\n✔ Telegram")
+            }
+
+            command("shutdown"){
+                client.closeBlocking()
+                exitProcess(0)
             }
         }
     }
