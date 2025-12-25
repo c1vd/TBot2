@@ -16,12 +16,15 @@ fun main() {
     val telegramChatId = env["TELEGRAM_CHAT_ID"]
     val maxDefaultChatId = env["MAX_SEND_CHAT_ID"]
 
-    val client = MaxClient(
+    val telegramClient = TelegramClient(telegramToken)
+
+    val maxClient = MaxClient(
         maxToken,
-        telegramToken,
-        telegramChatId
+        telegramChatId,
+        telegramClient
     )
-    client.connect()
+
+    maxClient.connect()
 
     val bot = bot {
         token = telegramToken
@@ -32,29 +35,31 @@ fun main() {
                     try {
                         val maxChatId = text.split(" ")[1]
                         maxChatId.toLong()
-                        client.sendMessage(text.substring(text.substring(6).indexOf(' ') + 6), maxChatId)
+                        maxClient.sendMessage(text.substring(text.substring(6).indexOf(' ') + 6), maxChatId)
                     } catch (_: Exception) {
-                        client.sendMessage(text.substring(6), maxDefaultChatId)
+                        maxClient.sendMessage(text.substring(6), maxDefaultChatId)
                     }
                 } catch (e: Exception) {
                     println("Ошибочка: ${e.toString()}")
                 }
 
             }
-            command("status"){
-                bot.sendMessage(ChatId.fromId(message.chat.id),"${when(client.connected){
-                    true -> "✔"
-                    false -> "❌"
-                }} MaxClient\n✔ Telegram")
+            command("status") {
+                bot.sendMessage(
+                    ChatId.fromId(message.chat.id), "${
+                        when (maxClient.connected) {
+                            true -> "✔"
+                            false -> "❌"
+                        }
+                    } MaxClient\n✔ Telegram"
+                )
             }
 
-            command("shutdown"){
-                client.closeBlocking()
+            command("shutdown") {
+                maxClient.closeBlocking()
                 exitProcess(0)
             }
         }
     }
     bot.startPolling()
-
-
 }

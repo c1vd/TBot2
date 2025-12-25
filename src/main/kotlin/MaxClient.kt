@@ -3,7 +3,8 @@ package com.servergroup
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
 import org.slf4j.Logger
@@ -13,7 +14,7 @@ import java.util.*
 import kotlin.coroutines.EmptyCoroutineContext
 
 
-class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId: String) : WebSocketClient(
+class MaxClient(val maxToken: String, val telegramChatId: String, val telegramClient: TelegramClient) : WebSocketClient(
     URI("wss://ws-api.oneme.ru/websocket"),
     mapOf(
         "Origin" to "https://web.oneme.ru",
@@ -22,123 +23,100 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
         "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
     )
 ) {
+    companion object
+
+    val logger: Logger = LoggerFactory.getLogger("MaxClient")!!
+
     val gson: Gson = Gson()
-    val telegramClient = TelegramClient(telegramToken)
     var connected = false
     var gotUser: User? = null
     val scope = CoroutineScope(EmptyCoroutineContext)
 
     var seq: Int = 0
-        get() {
-            field += 1
-            return field
-        }
+        get() = ++field
+
 
     val cid: Int
         get() = System.currentTimeMillis().toInt()
 
 
     fun heartbeat() {
+        var cnt = 0
         while (!connected) {
             Thread.sleep(500)
+            cnt += 1
+            if (cnt > 3) logger.warn("Unable to connect")
         }
+
         while (true) {
-            logger.info("Heartbeat tick")
-            send(
-                gson.toJson(
-                    mapOf(
-                        "ver" to 11,
-                        "cmd" to 0,
-                        "seq" to seq,
-                        "opcode" to 1,
-                        "payload" to mapOf("interactive" to false)
-                    )
-                )
-            )
+            logger.debug("Heartbeat тик")
+            send(MaxRequest(seq, 1, mapOf("interactive" to false)).toJson())
             Thread.sleep(12 * 1000)
         }
     }
 
     fun getUserAgent(): String {
-        return gson.toJson(
-            mapOf(
-                "ver" to 11,
-                "cmd" to 0,
-                "seq" to seq,
-                "opcode" to 6,
-                "payload" to mapOf(
-                    "userAgent" to mapOf(
-                        "deviceType" to "WEB",
-                        "locale" to "en",
-                        "osVersion" to "Windows",
-                        "deviceName" to "WebMax Lib",
-                        "headerUserAgent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-                        "deviceLocale" to "en",
-                        "appVersion" to "4.8.42",
-                        "screen" to "1920x1080 1.0x",
-                        "timezone" to "UTC"
-                    ),
-                    "deviceId" to UUID.randomUUID().toString()
-                )
+        return MaxRequest(
+            seq, 6, mapOf(
+                "userAgent" to mapOf(
+                    "deviceType" to "WEB",
+                    "locale" to "en",
+                    "osVersion" to "Windows",
+                    "deviceName" to "WebMax Lib",
+                    "headerUserAgent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+                    "deviceLocale" to "en",
+                    "appVersion" to "4.8.42",
+                    "screen" to "1920x1080 1.0x",
+                    "timezone" to "UTC"
+                ),
+                "deviceId" to UUID.randomUUID().toString()
             )
-        )
+        ).toJson()
     }
 
     fun getAuthRequest(): String {
-        return gson.toJson(
+        return MaxRequest(
+            seq, 19,
             mapOf(
-                "ver" to 11,
-                "cmd" to 0,
-                "seq" to seq,
-                "opcode" to 19,
-                "payload" to mapOf(
-                    "interactive" to true,
-                    "token" to maxToken,
-                    "chatsSync" to 0,
-                    "contactsSync" to 0,
-                    "presenceSync" to 0,
-                    "draftsSync" to 0,
-                    "chatsCount" to 40
-                )
+                "interactive" to true,
+                "token" to maxToken,
+                "chatsSync" to 0,
+                "contactsSync" to 0,
+                "presenceSync" to 0,
+                "draftsSync" to 0,
+                "chatsCount" to 40
             )
-        )
+        ).toJson()
     }
 
     fun getUser(id: String) {
         send(
-            gson.toJson(
-                mapOf(
-                    "ver" to 11,
-                    "cmd" to 0,
-                    "seq" to seq,
-                    "opcode" to 32,
-                    "payload" to mapOf("contactIds" to listOf(id))
-                )
-            )
+            MaxRequest(
+                seq, 32, mapOf("contactIds" to listOf(id))
+            ).toJson()
         )
     }
 
-    fun sendMessage(text: String, chatId: String) {
-        val req = gson.toJson(
+    fun sendMessage(message: Message, chatId: String, notify: Boolean = true) {
+        val req = MaxRequest(
+            seq, 64,
             mapOf(
-                "ver" to 11,
-                "cmd" to 0,
-                "seq" to seq,
-                "opcode" to 64,
-                "payload" to mapOf(
-                    "chatId" to chatId.toLong(),
-                    "message" to mapOf(
-                        "text" to text,
-                        "cid" to cid,
-                        "elements" to listOf<Any>(),
-                        "attaches" to listOf<Any>()
-                    ),
-                    "notify" to true
-                )
+                "chatId" to chatId.toLong(),
+                "message" to mapOf(
+                    "text" to message.text,
+                    "cid" to cid,
+                    "elements" to listOf<Any>(),
+                    "attaches" to listOf<Any>()
+                ),
+                "notify" to notify
             )
-        )
+        ).toJson()
 
         send(req)
+    }
+
+    fun sendMessage(text: String, chatId: String, notify: Boolean = true) {
+        sendMessage(Message("Me", text), chatId, notify)
     }
 
     override fun onOpen(handshakedata: ServerHandshake) {
@@ -150,37 +128,24 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
 
         connected = true
 
-        scope.async {
+        scope.launch {
             heartbeat()
+        }.invokeOnCompletion {
+            logger.info("Heartbeat отвалился")
         }
     }
 
     override fun onMessage(message: String?) {
-        scope.async {
-            if (message == null) return@async
+        scope.launch {
+            if (message == null) return@launch
 
             val obj = gson.fromJson(message, JsonObject::class.java)
             val opcode = obj["opcode"].toString().toInt()
             val payload = obj["payload"]
 
-            logger.debug(obj.toString())
+            logger.trace(obj.toString())
 
             when (opcode) {
-                /*1 -> {
-                    send(
-                        gson.toJson(
-                            mapOf(
-                                "ver" to 11,
-                                "cmd" to 0,
-                                "seq" to seq,
-                                "opcode" to 1,
-                                "payload" to mapOf("interactive" to false)
-                            )
-                        )
-                    )
-                }*/
-
-
                 32 -> {
                     val user = payload.asJsonObject["contacts"].asJsonArray[0].asJsonObject
                     val name = user["names"].asJsonArray[0].asJsonObject["name"]
@@ -202,24 +167,26 @@ class MaxClient(val maxToken: String, telegramToken: String, val telegramChatId:
                         Thread.sleep(100)
                         i += 1
                     }
-                    val messageText = "${gotUser?.name ?: "Unknown"}: $text"
-                    telegramClient.sendMessage(messageText, telegramChatId)
+
+                    telegramClient.sendMessage(Message(gotUser?.name ?: "Unknown", text), telegramChatId)
                     gotUser = null
                 }
             }
+        }.invokeOnCompletion {
+            if (it != null)
+                logger.trace("Сообщение обработано")
         }
     }
 
     override fun onClose(code: Int, reason: String?, remote: Boolean) {
-        println("Closed connection")
+        logger.info("Closed connection")
+
+        scope.cancel()
+
         connected = false
     }
 
     override fun onError(ex: Exception) {
-        ex.printStackTrace()
-    }
-
-    companion object {
-        val logger: Logger = LoggerFactory.getLogger("MaxClient")!!
+        logger.error(ex.toString())
     }
 }
