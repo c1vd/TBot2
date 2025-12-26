@@ -1,6 +1,7 @@
 package com.servergroup
 
 import java.net.URI
+import java.net.http.HttpClient
 import java.net.http.HttpRequest
 
 /**
@@ -28,6 +29,19 @@ object HttpUtilities {
         return HttpRequest.newBuilder(uri)
             .header("Content-Type", "application/json") // Set the Content-Type header
             .POST(HttpRequest.BodyPublishers.ofString(params))
+            .build()
+    }
+
+    /**
+     * Метод, возвращающий [HttpClient], который соответствует аргументам функции
+     *
+     * @param version версия протокола HTTP
+     * @param redirectionPolicy политика redirection
+     */
+    fun getHttpClient(version: HttpClient.Version = HttpClient.Version.HTTP_2, redirectionPolicy: HttpClient.Redirect = HttpClient.Redirect.NORMAL): HttpClient{
+        return HttpClient.newBuilder()
+            .version(version)
+            .followRedirects(redirectionPolicy)
             .build()
     }
 }

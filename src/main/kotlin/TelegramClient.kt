@@ -12,11 +12,14 @@ class TelegramClient(val botToken: String) {
         val gson = Gson()
     }
 
-    val httpClient: HttpClient = HttpClient.newBuilder()
-        .version(HttpClient.Version.HTTP_2)
-        .followRedirects(HttpClient.Redirect.NORMAL)
-        .build()
+    val httpClient: HttpClient = HttpUtilities.getHttpClient()
 
+    /**
+     * Метод, отправляющий сообщение в чат, у которого id = [chatId]
+     *
+     * @param message сообщение
+     * @param chatId идентификатор чата, который начинается с "-100"
+     */
     fun sendMessage(message: Message, chatId: String) {
         httpClient.send(
             HttpUtilities.getPost(
