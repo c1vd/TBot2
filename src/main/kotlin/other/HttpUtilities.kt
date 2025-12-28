@@ -1,4 +1,4 @@
-package com.servergroup
+package com.servergroup.other
 
 import java.net.URI
 import java.net.http.HttpClient
@@ -25,7 +25,7 @@ object HttpUtilities {
      * @param uri uri
      * @param params параметры в виде JSON строки
      */
-    fun getPost(uri: URI, params: String): HttpRequest{
+    fun getPost(uri: URI, params: String): HttpRequest {
         return HttpRequest.newBuilder(uri)
             .header("Content-Type", "application/json") // Set the Content-Type header
             .POST(HttpRequest.BodyPublishers.ofString(params))
@@ -33,12 +33,12 @@ object HttpUtilities {
     }
 
     /**
-     * Метод, возвращающий [HttpClient], который соответствует аргументам функции
+     * Метод, возвращающий [java.net.http.HttpClient], который соответствует аргументам функции
      *
      * @param version версия протокола HTTP
      * @param redirectionPolicy политика redirection
      */
-    fun getHttpClient(version: HttpClient.Version = HttpClient.Version.HTTP_2, redirectionPolicy: HttpClient.Redirect = HttpClient.Redirect.NORMAL): HttpClient{
+    fun getHttpClient(version: HttpClient.Version = HttpClient.Version.HTTP_2, redirectionPolicy: HttpClient.Redirect = HttpClient.Redirect.NORMAL): HttpClient {
         return HttpClient.newBuilder()
             .version(version)
             .followRedirects(redirectionPolicy)

@@ -4,6 +4,8 @@ import com.github.kotlintelegrambot.bot
 import com.github.kotlintelegrambot.dispatch
 import com.github.kotlintelegrambot.dispatcher.command
 import com.github.kotlintelegrambot.entities.ChatId
+import com.servergroup.maxMessenger.MaxClient
+import com.servergroup.telegramMessenger.TelegramClient
 import io.github.cdimascio.dotenv.dotenv
 import kotlin.system.exitProcess
 
@@ -13,8 +15,8 @@ fun main() {
 
     val maxToken = env["MAX_TOKEN"]
     val telegramToken = env["TELEGRAM_TOKEN"]
-    val telegramChatId = env["TELEGRAM_CHAT_ID"]
-    val maxDefaultChatId = env["MAX_SEND_CHAT_ID"]
+    val telegramChatId = env["TELEGRAM_CHAT_ID"].toLong()
+    val maxDefaultChatId = env["MAX_SEND_CHAT_ID"].toLong()
 
     val telegramClient = TelegramClient(telegramToken)
 
@@ -30,17 +32,12 @@ fun main() {
         token = telegramToken
         dispatch {
             command("text") {
+                val text = message.text!!
                 try {
-                    val text = message.text!!
-                    try {
-                        val maxChatId = text.split(" ")[1]
-                        maxChatId.toLong()
-                        maxClient.sendMessage(text.substring(text.substring(6).indexOf(' ') + 6), maxChatId)
-                    } catch (_: Exception) {
-                        maxClient.sendMessage(text.substring(6), maxDefaultChatId)
-                    }
-                } catch (e: Exception) {
-                    println("Ошибочка: ${e.toString()}")
+                    val maxChatId = text.split(" ")[1]
+                    maxClient.sendMessage(text.substring(text.substring(6).indexOf(' ') + 6), maxChatId.toLong())
+                } catch (_: Exception) {
+                    maxClient.sendMessage(text.substring(6), maxDefaultChatId)
                 }
 
             }

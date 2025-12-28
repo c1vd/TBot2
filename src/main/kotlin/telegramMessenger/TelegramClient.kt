@@ -1,6 +1,9 @@
-package com.servergroup
+package com.servergroup.telegramMessenger
 
-import com.google.gson.Gson
+
+import com.servergroup.other.HttpUtilities
+import com.servergroup.entities.Message
+import com.servergroup.telegramMessenger.requests.specified.TelegramSendMessageRequest
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.http.HttpClient
@@ -9,9 +12,11 @@ import java.net.http.HttpResponse
 class TelegramClient(val botToken: String) {
     companion object {
         val logger: Logger = LoggerFactory.getLogger("TelegramClient")!!
-        val gson = Gson()
     }
 
+    /**
+     * Http клиент, с помощью которого происходит взаимодействие с Telegram API
+     */
     val httpClient: HttpClient = HttpUtilities.getHttpClient()
 
     /**
@@ -20,20 +25,17 @@ class TelegramClient(val botToken: String) {
      * @param message сообщение
      * @param chatId идентификатор чата, который начинается с "-100"
      */
-    fun sendMessage(message: Message, chatId: String) {
+    fun sendMessage(message: Message, chatId: Long) {
         httpClient.send(
-            HttpUtilities.getPost(
-                "https://api.telegram.org/bot${botToken}/sendMessage",
-                gson.toJson(
-                    mapOf(
-                        "chat_id" to chatId,
-                        "text" to message.toString(),
-                        "parse_mode" to "HTML"
-                    )
-                )
-            ).also {
-                logger.trace(it.toString())
-            },
+            TelegramSendMessageRequest(
+                botToken,
+                chatId,
+                message.toString()
+            )
+                .toPostHttpRequest()
+                .also {
+                    logger.trace(it.toString())
+                },
             HttpResponse.BodyHandlers.ofString()
         )
     }

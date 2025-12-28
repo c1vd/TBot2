@@ -1,11 +1,8 @@
-package com.servergroup
+package com.servergroup.maxMessenger.requests
 
 import com.google.gson.Gson
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import java.util.UUID
 
-class MaxRequest(val seq: Int, val opcode: Int, val payload: Map<String, Any>) {
+open class MaxRequest(val seq: Int, val opcode: Int, val payload: Map<String, Any>) {
     companion object {
         val gson: Gson = Gson()
     }
