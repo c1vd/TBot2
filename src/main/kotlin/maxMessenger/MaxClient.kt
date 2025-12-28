@@ -71,7 +71,7 @@ class MaxClient(val maxToken: String, val telegramChatId: Long, val telegramClie
     }
 
     fun send(request: MaxRequest) {
-        send(request.toJson())
+        send(request.toJsonString())
     }
 
     /**

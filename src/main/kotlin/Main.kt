@@ -39,7 +39,6 @@ fun main() {
                 } catch (_: Exception) {
                     maxClient.sendMessage(text.substring(6), maxDefaultChatId)
                 }
-
             }
             command("status") {
                 bot.sendMessage(

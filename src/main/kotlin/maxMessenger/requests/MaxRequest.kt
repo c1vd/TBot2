@@ -3,12 +3,12 @@ package com.servergroup.maxMessenger.requests
 import com.google.gson.Gson
 
 open class MaxRequest(val seq: Int, val opcode: Int, val payload: Map<String, Any>) {
-    companion object {
+    protected companion object {
         val gson: Gson = Gson()
     }
 
 
-    fun toJson(): String {
+    fun toJsonString(): String {
         return gson.toJson(
             mapOf(
                 "ver" to 11,

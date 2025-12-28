@@ -5,12 +5,12 @@ import com.servergroup.other.HttpUtilities
 import java.net.http.HttpRequest
 
 open class TelegramRequest(val botToken: String, val params: String) {
-    companion object {
+    protected companion object {
         val gson: Gson = Gson()
     }
 
-    fun toPostHttpRequest(): HttpRequest {
-        return HttpUtilities.getPost(
+    fun toHttpRequest(): HttpRequest {
+        return HttpUtilities.post(
             "https://api.telegram.org/bot${botToken}/sendMessage",
             params
         )
