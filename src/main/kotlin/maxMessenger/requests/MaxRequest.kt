@@ -7,7 +7,9 @@ open class MaxRequest(val seq: Int, val opcode: Int, val payload: Map<String, An
         val gson: Gson = Gson()
     }
 
-
+    /**
+     * Создаёт JSON-строку по объекту
+     */
     fun toJsonString(): String {
         return gson.toJson(
             mapOf(

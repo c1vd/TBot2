@@ -24,14 +24,14 @@ class TelegramClient(val botToken: String) {
     /**
      * Отправляет Http-запрос в виде [TelegramRequest], ничего не возвращает
      */
-    fun sendRequest(request: TelegramRequest){
-        sendRequest(request.toHttpRequest())
+    fun send(request: TelegramRequest){
+        send(request.toHttpRequest())
     }
 
     /**
      * Отправляет Http-запрос, ничего не возвращает
      */
-    fun sendRequest(request: HttpRequest){
+    fun send(request: HttpRequest){
         httpClient.send(request, HttpResponse.BodyHandlers.ofString()).let {
             logger.trace(it.toString())
         }
@@ -44,6 +44,6 @@ class TelegramClient(val botToken: String) {
      * @param chatId идентификатор чата, который начинается с "-100"
      */
     fun sendMessage(message: Message, chatId: Long) {
-        sendRequest(TelegramSendMessageRequest(botToken, chatId, message.toString()))
+        send(TelegramSendMessageRequest(botToken, chatId, message))
     }
 }

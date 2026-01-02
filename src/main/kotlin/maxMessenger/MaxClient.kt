@@ -42,7 +42,7 @@ class MaxClient(val maxToken: String, val telegramChatId: Long, val telegramClie
     var connected = false
     var gotUser: User? = null
     val scope = CoroutineScope(EmptyCoroutineContext)
-    lateinit var groups: MutableMap<Long, String>
+    val groups: MutableMap<Long, String> = mutableMapOf()
 
     var seq: Int = 0
         get() = ++field
@@ -124,9 +124,10 @@ class MaxClient(val maxToken: String, val telegramChatId: Long, val telegramClie
 
             logger.trace(obj.toString())
 
+
             when (opcode) {
                 19 ->{
-                    groups = mutableMapOf()
+                    groups.clear()
 
                     val chats = payload["chats"].asJsonArray
                     for(chat in chats){
@@ -140,8 +141,10 @@ class MaxClient(val maxToken: String, val telegramChatId: Long, val telegramClie
 
                 128 -> {
                     val message = payload["message"].asJsonObject
+
                     val senderId = message["sender"].asString
                     val text = message["text"].asString
+                    val attaches = message["link"].asJsonObject["attaches"].asJsonArray
 
                     val chatId = payload["chatId"].asLong
 

@@ -2,6 +2,7 @@ package com.servergroup.maxMessenger.requests.specified
 
 import com.servergroup.maxMessenger.requests.MaxRequest
 
+
 class MaxAuthRequest(seq: Int, maxToken: String) : MaxRequest(
     seq, 19, mapOf(
         "interactive" to true,
@@ -12,5 +13,4 @@ class MaxAuthRequest(seq: Int, maxToken: String) : MaxRequest(
         "draftsSync" to 0,
         "chatsCount" to 40
     )
-) {
-}
+)

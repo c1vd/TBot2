@@ -20,20 +20,20 @@ object HttpUtilities {
     }
 
     /**
-     * Метод, возвращающий HttpRequest, который строится на основе uri и params
+     * Метод, возвращающий [HttpRequest], который строится на основе uri и params
      *
      * @param uri uri
      * @param params параметры в виде JSON строки
      */
     fun post(uri: URI, params: String): HttpRequest {
         return HttpRequest.newBuilder(uri)
-            .header("Content-Type", "application/json") // Set the Content-Type header
+            .header("Content-Type", "application/json")
             .POST(HttpRequest.BodyPublishers.ofString(params))
             .build()
     }
 
     /**
-     * Метод, возвращающий [java.net.http.HttpClient], который соответствует аргументам функции
+     * Метод, возвращающий [HttpClient], который соответствует аргументам метода
      *
      * @param version версия протокола HTTP
      * @param redirectionPolicy политика redirection
